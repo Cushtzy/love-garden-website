@@ -1,0 +1,10 @@
+{
+  "name": "Trixcy's Virtual Garden",
+  "short_name": "Virtual Garden",
+  "start_url": "./love.html",
+  "display": "standalone",
+  "background_color": "#ffeaf1",
+  "theme_color": "#b4123d",
+  "description": "A magical romantic digital garden for Trixcy, lovingly created by Cush.",
+  "icons": []
+}

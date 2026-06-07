@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#b4123d">
+    <meta name="description" content="Trixcy's Virtual Garden - a romantic interactive digital garden made with love.">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <title>Trixcy's Virtual Garden</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Quicksand:wght@400;600;700&family=Sacramento&display=swap');
+
+        :root {
+            --rose-900: #5d0a1f;
+            --rose-700: #8a1232;
+            --rose-500: #b4123d;
+            --rose-300: #e45780;
+            --pink-200: #ffd5e1;
+            --pink-100: #ffeaf1;
+            --cream: #fff7fa;
+            --glass: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --shadow: 0 16px 40px rgba(120, 8, 40, 0.25);
+            --text: #4a1024;
+            --night-sky-1: #190925;
+            --night-sky-2: #32103e;
+            --night-glow: #ffd6e8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Quicksand", sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            background: radial-gradient(circle at 15% 20%, #ffe1ea, transparent 30%),
+                radial-gradient(circle at 90% 15%, #ffc2d4, transparent 35%),
+                linear-gradient(150deg, #ffdbe8, #ffedf4 50%, #ffd0df);
+            overflow: hidden;
+        }
+
+        body.night {
+            color: #ffe9f4;
+            background: radial-gradient(circle at 80% 18%, rgba(255, 228, 240, 0.15), transparent 30%),
+                radial-gradient(circle at 20% 78%, rgba(255, 164, 207, 0.16), transparent 32%),
+                linear-gradient(150deg, var(--night-sky-1), var(--night-sky-2) 50%, #4f1f57);
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .glass {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+        }
+
+        #landing {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            z-index: 200;
+        }
+
+        .welcome-card {
+            width: min(92vw, 680px);
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-title {
+            font-family: "Sacramento", cursive;
+            font-size: clamp(2.4rem, 8vw, 4.6rem);
+            color: var(--rose-700);
+            margin-bottom: 0.7rem;
+            text-shadow: 0 4px 20px rgba(255, 255, 255, 0.45);
+            animation: floatIn 0.9s ease;
+        }
+
+        .welcome-sub {
+            font-size: clamp(1rem, 2.8vw, 1.4rem);
+            margin-bottom: 1.2rem;
+        }
+
+        .welcome-question {
+            font-family: "Playfair Display", serif;
+            font-size: clamp(1.2rem, 3.8vw, 1.9rem);
+            margin-bottom: 1.4rem;
+        }
+
+        .landing-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.75rem 1.2rem;
+            cursor: pointer;
+            font-weight: 700;
+            background: linear-gradient(130deg, #ff7ea8, #d72667);
+            color: #fff;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(1.07);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(130deg, #ffa6bf, #ff6a9f);
+        }
+
+        #noMessage {
+            margin-top: 1rem;
+            font-weight: 700;
+            color: var(--rose-700);
+        }
+
+        #petalField,
+        #heartField,
+        #globalEffects,
+        #nightSky {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        #nightSky {
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            z-index: 20;
+        }
+
+        body.night #nightSky {
+            opacity: 1;
+        }
+
+        .falling {
+            position: absolute;
+            animation: drift linear infinite;
+            opacity: 0.8;
+            will-change: transform;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(110vh) translateX(90px) rotate(380deg);
+            }
+        }
+
+        @keyframes floatIn {
+            from {
+                transform: translateY(18px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #app {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        #app.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .topbar {
+            margin: 0.7rem;
+            padding: 0.7rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.6rem;
+            align-items: center;
+            z-index: 60;
+        }
+
+        .topbar-left {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            align-items: center;
+        }
+
+        .chip {
+            border-radius: 999px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.84rem;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: inherit;
+            font-weight: 700;
+        }
+
+        #gardenView {
+            margin: 0.7rem;
+            margin-top: 0;
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow);
+            background: linear-gradient(180deg, rgba(255, 191, 216, 0.7), rgba(255, 228, 236, 0.45));
+        }
+
+        body.night #gardenView {
+            background: linear-gradient(180deg, rgba(54, 24, 70, 0.58), rgba(34, 14, 45, 0.55));
+        }
+
+        #gardenWorld {
+            position: absolute;
+            width: 2200px;
+            height: 1500px;
+            transform-origin: top left;
+            transition: transform 0.12s linear;
+        }
+
+        .area {
+            position: absolute;
+            border-radius: 18px;
+            border: 1px dashed rgba(255, 255, 255, 0.36);
+            display: grid;
+            place-items: center;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .flora {
+            position: absolute;
+            width: 52px;
+            height: 68px;
+            cursor: pointer;
+            border: 0;
+            background: transparent;
+            transition: transform 0.2s ease;
+        }
+
+        .flora:hover {
+            transform: translateY(-4px) scale(1.05);
+        }
+
+        .stem {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 6px;
+            height: 33px;
+            background: linear-gradient(#46a148, #2f7d35);
+            transform: translateX(-50%);
+            border-radius: 8px;
+        }
+
+        .blossom {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(255, 114, 163, 0.48);
+        }
+
+        .flora[data-stage="0"] .blossom {
+            width: 14px;
+            height: 14px;
+            top: 18px;
+            background: #ff87b1;
+        }
+
+        .flora[data-stage="1"] .blossom {
+            width: 24px;
+            height: 24px;
+            top: 12px;
+            background: radial-gradient(circle at 30% 20%, #ffd8ea, #ff5f98);
+        }
+
+        .flora[data-stage="2"] .blossom {
+            background: radial-gradient(circle at 30% 20%, #ffe8f3, #ff498d);
+        }
+
+        .flora.bloom {
+            animation: bloomBurst 0.8s ease;
+        }
+
+        @keyframes bloomBurst {
+            0% {
+                transform: scale(0.7) rotate(-10deg);
+                opacity: 0.7;
+            }
+
+            60% {
+                transform: scale(1.3) rotate(6deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        #avatar {
+            position: absolute;
+            width: 44px;
+            height: 58px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #ffcde0, #ff7ea8 80%);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 24px rgba(127, 14, 55, 0.35);
+            z-index: 6;
+            display: grid;
+            place-items: center;
+            color: #7f0e37;
+            font-weight: 700;
+        }
+
+        #avatar::after {
+            content: "❤";
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .poi {
+            position: absolute;
+            border: 0;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            border-radius: 14px;
+            padding: 0.5rem;
+            background: linear-gradient(160deg, #ff7aa7, #d62a67);
+            box-shadow: 0 8px 20px rgba(131, 18, 57, 0.35);
+        }
+
+        .poi.tree {
+            width: 132px;
+            height: 142px;
+            border-radius: 28px 28px 38px 38px;
+            background: radial-gradient(circle at 30% 30%, #96d28c, #418f4b 68%);
+            color: #113717;
+            border: 3px solid #8a5131;
+        }
+
+        .poi.house {
+            width: 130px;
+            height: 110px;
+            background: linear-gradient(180deg, #ff95bd, #ff628f);
+            border-radius: 20px;
+            clip-path: polygon(0 42%, 50% 0, 100% 42%, 100% 100%, 0 100%);
+        }
+
+        .poi.fountain {
+            width: 120px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #99deff, #4ca8d8);
+            color: #102b44;
+            border: 2px solid #d9f2ff;
+        }
+
+        .poi.surprise {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 20%, #fff2f8, #ff5a93 55%, #cc174f);
+        }
+
+        .butterfly {
+            position: absolute;
+            width: 28px;
+            height: 24px;
+            border: 0;
+            cursor: pointer;
+            background: transparent;
+            z-index: 7;
+            animation: flutter 6s linear infinite;
+        }
+
+        .butterfly::before,
+        .butterfly::after {
+            content: "";
+            position: absolute;
+            width: 14px;
+            height: 20px;
+            border-radius: 12px 12px 6px 12px;
+            background: linear-gradient(180deg, #ffd6ea, #ff73a8);
+            box-shadow: 0 0 10px rgba(255, 175, 212, 0.55);
+        }
+
+        .butterfly::before {
+            left: 0;
+            transform: rotate(-14deg);
+        }
+
+        .butterfly::after {
+            right: 0;
+            transform: scaleX(-1) rotate(-14deg);
+        }
+
+        @keyframes flutter {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-9px);
+            }
+        }
+
+        .panel {
+            position: absolute;
+            z-index: 80;
+            padding: 0.9rem;
+            max-width: min(94vw, 370px);
+            max-height: min(80vh, 560px);
+            overflow: auto;
+            border-radius: 18px;
+            background: rgba(255, 240, 246, 0.84);
+            border: 1px solid rgba(255, 255, 255, 0.74);
+            box-shadow: var(--shadow);
+            color: #5f0f2a;
+        }
+
+        body.night .panel {
+            background: rgba(38, 16, 49, 0.86);
+            color: #ffe8f4;
+            border-color: rgba(255, 209, 230, 0.4);
+        }
+
+        #flowerPanel {
+            right: 1rem;
+            bottom: 1rem;
+            width: 350px;
+        }
+
+        #musicPanel {
+            right: 1rem;
+            top: 5.5rem;
+            width: 360px;
+        }
+
+        #adminPanel {
+            left: 1rem;
+            top: 5.5rem;
+            width: min(94vw, 420px);
+            z-index: 90;
+        }
+
+        .panel h3 {
+            font-family: "Playfair Display", serif;
+            margin-bottom: 0.5rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 0.42rem 0;
+        }
+
+        .tiny {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            border: 1px solid rgba(191, 88, 128, 0.35);
+            border-radius: 12px;
+            padding: 0.55rem 0.7rem;
+            background: rgba(255, 255, 255, 0.75);
+            color: #5f0f2a;
+        }
+
+        body.night input,
+        body.night textarea,
+        body.night select {
+            background: rgba(255, 230, 246, 0.18);
+            color: #ffeaf4;
+            border-color: rgba(255, 223, 240, 0.3);
+        }
+
+        textarea {
+            min-height: 72px;
+            resize: vertical;
+        }
+
+        #playlist {
+            margin-top: 0.55rem;
+            max-height: 130px;
+            overflow: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(200, 98, 141, 0.26);
+            padding: 0.3rem;
+        }
+
+        .song {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.3rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.52);
+            border-radius: 10px;
+            padding: 0.35rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.86rem;
+        }
+
+        body.night .song {
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 56px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.34);
+            margin-top: 0.45rem;
+        }
+
+        body.night #visualizer {
+            background: rgba(255, 230, 246, 0.16);
+        }
+
+        #messageModal,
+        #lightbox,
+        #memoryModal,
+        #letterModal,
+        #achievementModal,
+        #guideModal {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            place-items: center;
+            background: rgba(40, 8, 23, 0.46);
+        }
+
+        .modal-card {
+            width: min(95vw, 760px);
+            max-height: 88vh;
+            overflow: auto;
+            padding: 1rem;
+            border-radius: 20px;
+            background: rgba(255, 241, 247, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        body.night .modal-card {
+            background: rgba(32, 11, 44, 0.94);
+            color: #ffe9f4;
+            border-color: rgba(255, 220, 240, 0.25);
+        }
+
+        #lightbox img {
+            max-width: 90vw;
+            max-height: 64vh;
+            border-radius: 12px;
+            margin: 0.6rem 0;
+            object-fit: cover;
+        }
+
+        .gallery-grid {
+            display: grid;
+            gap: 0.6rem;
+            grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+            margin-top: 0.6rem;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1 / 1;
+            border-radius: 14px;
+            background: linear-gradient(160deg, rgba(255, 184, 214, 0.8), rgba(255, 129, 170, 0.8));
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #movePad {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            z-index: 70;
+            width: 132px;
+            height: 132px;
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left center right"
+                ". down .";
+            gap: 0.3rem;
+            opacity: 0.94;
+        }
+
+        #movePad button {
+            border: 0;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.55);
+            color: #6d1230;
+            font-weight: 700;
+        }
+
+        #movePad .up {
+            grid-area: up;
+        }
+
+        #movePad .down {
+            grid-area: down;
+        }
+
+        #movePad .left {
+            grid-area: left;
+        }
+
+        #movePad .right {
+            grid-area: right;
+        }
+
+        #movePad .center {
+            grid-area: center;
+            background: rgba(255, 255, 255, 0.27);
+        }
+
+        body.night #movePad button {
+            color: #ffe9f4;
+            background: rgba(255, 233, 245, 0.17);
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.65);
+            pointer-events: none;
+            animation: ripple 1.2s ease-out forwards;
+        }
+
+        @keyframes ripple {
+            from {
+                width: 10px;
+                height: 10px;
+                opacity: 0.8;
+                transform: translate(-50%, -50%);
+            }
+
+            to {
+                width: 130px;
+                height: 130px;
+                opacity: 0;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .typewriter {
+            border-right: 2px solid currentColor;
+            white-space: pre-wrap;
+            overflow: hidden;
+            min-height: 120px;
+            line-height: 1.55;
+            font-size: 1rem;
+            padding-right: 0.2rem;
+        }
+
+        #floatingNotes {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        .music-note {
+            position: absolute;
+            font-size: 1.2rem;
+            animation: noteRise 2.8s ease-out forwards;
+            color: #ff80af;
+            text-shadow: 0 4px 14px rgba(255, 121, 166, 0.8);
+        }
+
+        @keyframes noteRise {
+            from {
+                transform: translateY(0) scale(0.8);
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-130px) translateX(30px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .stars,
+        .fireflies {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .star,
+        .firefly {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.85;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        .star {
+            background: #fff6fb;
+            box-shadow: 0 0 12px rgba(255, 250, 253, 0.9);
+        }
+
+        .firefly {
+            background: #fff7b7;
+            box-shadow: 0 0 12px rgba(255, 241, 137, 0.88);
+            animation-duration: 3s;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                transform: scale(0.7);
+                opacity: 0.35;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .footer-note {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 940px) {
+            #musicPanel {
+                top: auto;
+                bottom: 148px;
+                right: 0.7rem;
+                width: min(94vw, 360px);
+            }
+
+            #adminPanel {
+                width: min(95vw, 400px);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            #flowerPanel {
+                width: min(95vw, 360px);
+            }
+
+            #movePad {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="petalField"></div>
+    <div id="heartField"></div>
+    <div id="globalEffects"></div>
+    <div id="floatingNotes"></div>
+    <div id="nightSky">
+        <div class="stars" id="stars"></div>
+        <div class="fireflies" id="fireflies"></div>
+    </div>
+
+    <section id="landing">
+        <div class="welcome-card glass">
+            <h1 class="welcome-title">Trixcy's Virtual Garden</h1>
+            <p class="welcome-sub">A magical garden made with love by Cush Jabez Nuñeza</p>
+            <p class="welcome-question">Are you Trixcy Criel Lintuan Bustillos? 🌸❤️</p>
+            <div class="landing-actions">
+                <button class="btn" id="yesBtn">Yes, that's me 💕</button>
+                <button class="btn secondary" id="noBtn">No 🌷</button>
+            </div>
+            <p id="noMessage" class="hidden">This garden was specially created for Trixcy. 🌹</p>
+        </div>
+    </section>
+
+    <main id="app" class="hidden">
+        <header class="topbar glass">
+            <div class="topbar-left">
+                <span class="chip" id="counterChip">Since Courtship: ...</span>
+                <button class="chip" id="toggleDayNight">Switch to Night ✨</button>
+                <button class="chip" id="achievementsBtn">Achievements 🏆</button>
+                <button class="chip" id="messageBtn">Message From Cush ❤️</button>
+                <button class="chip" id="galleryBtn">Photo Blossom 🌹</button>
+                <button class="chip" id="guideBtn">How To Play 📖</button>
+            </div>
+            <div class="topbar-right row">
+                <button class="btn" id="toggleMusic">Music Garden 🎵</button>
+                <button class="btn secondary" id="toggleAdmin">Admin Dashboard</button>
+            </div>
+        </header>
+
+        <section id="gardenView">
+            <div id="gardenWorld">
+                <div class="area" style="left:40px;top:880px;width:320px;height:250px;">Rose Tunnel 🔐</div>
+                <div class="area" style="left:1710px;top:840px;width:360px;height:270px;">Secret Heart Cave 🔐</div>
+                <div class="area" style="left:1640px;top:180px;width:380px;height:260px;">Hidden Sakura Garden 🔐</div>
+                <div class="area" style="left:220px;top:180px;width:400px;height:280px;">Dream Lake 🔐</div>
+
+                <button class="poi tree" id="memoryTree" style="left:1030px;top:510px;">Memory Tree 🌳</button>
+                <button class="poi house" id="loveHouse" style="left:640px;top:690px;">Love Letter House 💌</button>
+                <button class="poi fountain" id="fountain" style="left:1320px;top:780px;">Wishing Fountain ⛲</button>
+                <button class="poi surprise" id="dailyFlower" style="left:890px;top:920px;">Daily 🌷</button>
+
+                <div id="flowers"></div>
+                <div id="butterflies"></div>
+                <div id="avatar" style="left:1080px;top:760px;" aria-label="Player"></div>
+            </div>
+
+            <div id="movePad" class="glass">
+                <button class="up" data-dir="up">▲</button>
+                <button class="left" data-dir="left">◀</button>
+                <button class="center" aria-hidden="true">❤</button>
+                <button class="right" data-dir="right">▶</button>
+                <button class="down" data-dir="down">▼</button>
+            </div>
+        </section>
+    </main>
+
+    <aside id="flowerPanel" class="panel hidden">
+        <h3>Flower Actions</h3>
+        <p id="selectedFlowerLabel">Select a flower in the garden.</p>
+        <div class="row">
+            <button class="btn" id="waterFlowerBtn">Water Flower 💧</button>
+            <button class="btn secondary" id="plantFlowerBtn">Plant New Flower 🌱</button>
+        </div>
+        <p class="tiny">Bloom flowers to unlock love notes, memories, hidden photos, special messages, and compliments.
+        </p>
+    </aside>
+
+    <aside id="musicPanel" class="panel hidden">
+        <h3>Music Garden Feature 🎵</h3>
+        <audio id="audioPlayer" preload="metadata"></audio>
+        <p><strong>Now Playing:</strong> <span id="nowPlaying">None</span></p>
+        <div class="row">
+            <button class="btn" id="prevSong">Prev</button>
+            <button class="btn" id="playPauseSong">Play</button>
+            <button class="btn" id="nextSong">Next</button>
+        </div>
+        <div class="row">
+            <button class="chip" id="shuffleBtn">Shuffle: Off</button>
+            <button class="chip" id="repeatBtn">Repeat: Off</button>
+        </div>
+        <label class="tiny" for="volumeSlider">Volume</label>
+        <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.7">
+        <div class="row">
+            <label class="chip" for="songUploader">Upload Songs</label>
+            <input id="songUploader" type="file" accept="audio/*" multiple class="hidden">
+        </div>
+        <div id="playlist"></div>
+        <canvas id="visualizer" width="340" height="56" aria-label="Music Visualizer"></canvas>
+    </aside>
+
+    <aside id="adminPanel" class="panel hidden">
+        <h3>Admin Dashboard</h3>
+        <p class="tiny">Protected for Cush only. Local mode only, no Firebase required. Data saves in this browser.</p>
+
+        <div id="loginBlock">
+            <input type="password" id="adminPassword" placeholder="Enter admin passcode">
+            <div class="row">
+                <button class="btn" id="adminLogin">Unlock</button>
+                <button class="btn secondary" id="adminLogout">Lock</button>
+            </div>
+            <p id="adminStatus" class="tiny">Locked</p>
+        </div>
+
+        <div id="adminControls" class="hidden">
+            <div class="row"><strong>Garden Content Manager</strong></div>
+            <label class="tiny">Add Love Note / Memory / Message / Compliment</label>
+            <textarea id="adminNote" placeholder="Write heartfelt content..."></textarea>
+            <button class="btn" id="addFlowerContent">Create New Flower Content</button>
+
+            <label class="tiny" style="margin-top:0.6rem;display:block;">Add Love Letter</label>
+            <input type="text" id="letterTitle" placeholder="Letter title">
+            <textarea id="letterBody" placeholder="Letter body"></textarea>
+            <button class="btn secondary" id="addLetterBtn">Add Letter</button>
+
+            <label class="tiny" style="margin-top:0.6rem;display:block;">Add Memory Branch</label>
+            <input type="text" id="memoryTitle" placeholder="Memory title">
+            <input type="date" id="memoryDate">
+            <textarea id="memoryBody" placeholder="Memory details"></textarea>
+            <button class="btn" id="addMemoryBtn">Add Memory</button>
+
+            <label class="tiny" style="margin-top:0.6rem;display:block;">Theme Accent</label>
+            <select id="themeSelect">
+                <option value="romance">Romance Red/Pink</option>
+                <option value="rose-gold">Rose Gold</option>
+                <option value="cherry">Cherry Blossom</option>
+            </select>
+            <button class="btn secondary" id="applyThemeBtn">Apply Theme</button>
+
+            <p class="footer-note">Admin statistics: <span id="statsText"></span></p>
+        </div>
+    </aside>
+
+    <section id="messageModal">
+        <article class="modal-card">
+            <h2>Message From Cush ❤️</h2>
+            <p style="white-space:pre-wrap;line-height:1.6; margin: 0.7rem 0;">To my dearest Trixcy,
+
+                This garden was created especially for you. Every flower holds a memory, every song carries a feeling,
+                and every corner of this garden is filled with love. No matter where life takes us, there will always be
+                a place where our memories bloom forever.
+
+                Love,
+                Cush Jabez Nuñeza ❤️</p>
+            <button class="btn" data-close="messageModal">Close</button>
+        </article>
+    </section>
+
+    <section id="memoryModal">
+        <article class="modal-card">
+            <h2>Memory Tree 🌳</h2>
+            <p class="tiny">Each branch is a courtship memory timeline.</p>
+            <div id="memoryTimeline"></div>
+            <div class="row" style="margin-top:0.8rem;">
+                <button class="btn" data-close="memoryModal">Close</button>
+            </div>
+        </article>
+    </section>
+
+    <section id="letterModal">
+        <article class="modal-card">
+            <h2>Love Letter House 💌</h2>
+            <div class="row">
+                <select id="letterSelect"></select>
+                <button class="btn secondary" id="openEnvelope">Open Envelope</button>
+            </div>
+            <div id="letterOutput" class="typewriter"></div>
+            <div class="row" style="margin-top:0.8rem;">
+                <button class="btn" data-close="letterModal">Close</button>
+            </div>
+        </article>
+    </section>
+
+    <section id="lightbox">
+        <article class="modal-card">
+            <h2>Photo Blossom Gallery 🌹</h2>
+            <div class="row">
+                <label class="chip" for="photoUploader">Upload Photos</label>
+                <input id="photoUploader" type="file" accept="image/*" multiple class="hidden">
+                <input id="photoCaption" type="text" placeholder="Caption for uploaded photos">
+            </div>
+            <div id="galleryGrid" class="gallery-grid"></div>
+            <div class="row" style="margin-top:0.7rem;">
+                <button class="btn" id="startSlideshow">Slideshow ▶</button>
+                <button class="btn secondary" data-close="lightbox">Close</button>
+            </div>
+            <figure id="lightboxView" class="hidden" style="margin-top:0.8rem; text-align:center;">
+                <img id="lightboxImage" alt="Memory photo">
+                <figcaption id="lightboxCaption"></figcaption>
+            </figure>
+        </article>
+    </section>
+
+    <section id="achievementModal">
+        <article class="modal-card">
+            <h2>Love Achievement Scrapbook 🏆</h2>
+            <div id="achievementList"></div>
+            <div class="row" style="margin-top:0.8rem;">
+                <button class="btn" data-close="achievementModal">Close</button>
+            </div>
+        </article>
+    </section>
+
+    <section id="guideModal">
+        <article class="modal-card">
+            <h2>Full Guide: How To Play Trixcy's Virtual Garden 📖</h2>
+            <p class="tiny">This is your complete walkthrough so every feature is easy to enjoy.</p>
+
+            <h3 style="margin-top:0.8rem;">1. Start The Experience</h3>
+            <p>On the landing screen, tap <strong>Yes, that's me 💕</strong> to enter the magical garden.</p>
+
+            <h3 style="margin-top:0.8rem;">2. Move Around The Garden</h3>
+            <p>Use keyboard controls <strong>W A S D</strong> or <strong>Arrow Keys</strong> to walk around.</p>
+            <p>On mobile, use the movement pad in the lower-left corner.</p>
+
+            <h3 style="margin-top:0.8rem;">3. Interact With Flowers</h3>
+            <p>Tap any flower to select it, then use:</p>
+            <p>- <strong>Water Flower 💧</strong> to grow bloom stages</p>
+            <p>- <strong>Plant New Flower 🌱</strong> to create more flowers</p>
+            <p>When a flower fully blooms, it reveals:</p>
+            <p>- Love note</p>
+            <p>- Memory</p>
+            <p>- Special message</p>
+            <p>- Secret compliment</p>
+
+            <h3 style="margin-top:0.8rem;">4. Explore Special Places</h3>
+            <p>- <strong>Memory Tree 🌳</strong>: opens timeline memories and milestones</p>
+            <p>- <strong>Love Letter House 💌</strong>: opens letters with typewriter animation</p>
+            <p>- <strong>Wishing Fountain ⛲</strong>: click to throw a coin and reveal dreams/goals</p>
+            <p>- <strong>Daily Flower 🌷</strong>: reveals a fresh surprise each day</p>
+
+            <h3 style="margin-top:0.8rem;">5. Use Music Garden</h3>
+            <p>Open <strong>Music Garden 🎵</strong> and do the following:</p>
+            <p>- Upload songs</p>
+            <p>- Play/Pause, Next, Previous</p>
+            <p>- Toggle Shuffle and Repeat</p>
+            <p>- Adjust volume</p>
+            <p>The visualizer and floating notes animate while music plays.</p>
+
+            <h3 style="margin-top:0.8rem;">6. Open Photo Blossom Gallery</h3>
+            <p>Tap <strong>Photo Blossom 🌹</strong> in the top bar.</p>
+            <p>- Upload photos</p>
+            <p>- Add captions</p>
+            <p>- Tap any image to open lightbox view</p>
+            <p>- Use slideshow mode for continuous viewing</p>
+
+            <h3 style="margin-top:0.8rem;">7. Day And Night Mode</h3>
+            <p>Use <strong>Switch to Night ✨</strong> to toggle romantic night mode with stars and fireflies.</p>
+
+            <h3 style="margin-top:0.8rem;">8. Find Hidden Areas</h3>
+            <p>Walk around and discover:</p>
+            <p>- Rose Tunnel</p>
+            <p>- Secret Heart Cave</p>
+            <p>- Hidden Sakura Garden</p>
+            <p>- Dream Lake</p>
+            <p>Exploration unlocks achievements.</p>
+
+            <h3 style="margin-top:0.8rem;">9. Butterfly Messenger</h3>
+            <p>Tap butterflies while they fly to reveal random sweet messages, memories, and confessions.</p>
+
+            <h3 style="margin-top:0.8rem;">10. Track Progress</h3>
+            <p>Open <strong>Achievements 🏆</strong> to see unlocked milestones.</p>
+            <p>Watch the top counter for <strong>Since Courtship</strong> live time progression.</p>
+
+            <h3 style="margin-top:0.8rem;">11. Admin Dashboard (Local)</h3>
+            <p>Open <strong>Admin Dashboard</strong>, enter passcode, then you can:</p>
+            <p>- Add flower content</p>
+            <p>- Add letters</p>
+            <p>- Add memory branches</p>
+            <p>- Change theme accent</p>
+            <p>- Monitor garden statistics</p>
+
+            <h3 style="margin-top:0.8rem;">Quick Goal Checklist</h3>
+            <p>- Bloom at least 10 flowers</p>
+            <p>- Click butterflies</p>
+            <p>- Visit all hidden areas</p>
+            <p>- Upload songs and listen to all of them</p>
+            <p>- Add photos and run slideshow</p>
+            <p>- Read memory timeline and love letters</p>
+
+            <div class="row" style="margin-top:0.9rem;">
+                <button class="btn" data-close="guideModal">Start Exploring</button>
+            </div>
+        </article>
+    </section>
+
+    <script>
+
+        const ui = {
+            landing: document.getElementById("landing"),
+            app: document.getElementById("app"),
+            noMessage: document.getElementById("noMessage"),
+            yesBtn: document.getElementById("yesBtn"),
+            noBtn: document.getElementById("noBtn"),
+            toggleMusic: document.getElementById("toggleMusic"),
+            musicPanel: document.getElementById("musicPanel"),
+            flowerPanel: document.getElementById("flowerPanel"),
+            selectedFlowerLabel: document.getElementById("selectedFlowerLabel"),
+            flowers: document.getElementById("flowers"),
+            butterflies: document.getElementById("butterflies"),
+            gardenWorld: document.getElementById("gardenWorld"),
+            gardenView: document.getElementById("gardenView"),
+            avatar: document.getElementById("avatar"),
+            waterFlowerBtn: document.getElementById("waterFlowerBtn"),
+            plantFlowerBtn: document.getElementById("plantFlowerBtn"),
+            dailyFlower: document.getElementById("dailyFlower"),
+            messageModal: document.getElementById("messageModal"),
+            messageBtn: document.getElementById("messageBtn"),
+            memoryTree: document.getElementById("memoryTree"),
+            memoryModal: document.getElementById("memoryModal"),
+            memoryTimeline: document.getElementById("memoryTimeline"),
+            loveHouse: document.getElementById("loveHouse"),
+            letterModal: document.getElementById("letterModal"),
+            letterSelect: document.getElementById("letterSelect"),
+            letterOutput: document.getElementById("letterOutput"),
+            openEnvelope: document.getElementById("openEnvelope"),
+            galleryBtn: document.getElementById("galleryBtn"),
+            lightbox: document.getElementById("lightbox"),
+            galleryGrid: document.getElementById("galleryGrid"),
+            photoUploader: document.getElementById("photoUploader"),
+            photoCaption: document.getElementById("photoCaption"),
+            lightboxView: document.getElementById("lightboxView"),
+            lightboxImage: document.getElementById("lightboxImage"),
+            lightboxCaption: document.getElementById("lightboxCaption"),
+            startSlideshow: document.getElementById("startSlideshow"),
+            fountain: document.getElementById("fountain"),
+            globalEffects: document.getElementById("globalEffects"),
+            toggleDayNight: document.getElementById("toggleDayNight"),
+            counterChip: document.getElementById("counterChip"),
+            achievementsBtn: document.getElementById("achievementsBtn"),
+            achievementModal: document.getElementById("achievementModal"),
+            achievementList: document.getElementById("achievementList"),
+            guideBtn: document.getElementById("guideBtn"),
+            guideModal: document.getElementById("guideModal"),
+            audioPlayer: document.getElementById("audioPlayer"),
+            nowPlaying: document.getElementById("nowPlaying"),
+            prevSong: document.getElementById("prevSong"),
+            playPauseSong: document.getElementById("playPauseSong"),
+            nextSong: document.getElementById("nextSong"),
+            volumeSlider: document.getElementById("volumeSlider"),
+            shuffleBtn: document.getElementById("shuffleBtn"),
+            repeatBtn: document.getElementById("repeatBtn"),
+            songUploader: document.getElementById("songUploader"),
+            playlist: document.getElementById("playlist"),
+            visualizer: document.getElementById("visualizer"),
+            floatingNotes: document.getElementById("floatingNotes"),
+            toggleAdmin: document.getElementById("toggleAdmin"),
+            adminPanel: document.getElementById("adminPanel"),
+            adminPassword: document.getElementById("adminPassword"),
+            adminLogin: document.getElementById("adminLogin"),
+            adminLogout: document.getElementById("adminLogout"),
+            adminStatus: document.getElementById("adminStatus"),
+            adminControls: document.getElementById("adminControls"),
+            addFlowerContent: document.getElementById("addFlowerContent"),
+            adminNote: document.getElementById("adminNote"),
+            letterTitle: document.getElementById("letterTitle"),
+            letterBody: document.getElementById("letterBody"),
+            addLetterBtn: document.getElementById("addLetterBtn"),
+            memoryTitle: document.getElementById("memoryTitle"),
+            memoryDate: document.getElementById("memoryDate"),
+            memoryBody: document.getElementById("memoryBody"),
+            addMemoryBtn: document.getElementById("addMemoryBtn"),
+            themeSelect: document.getElementById("themeSelect"),
+            applyThemeBtn: document.getElementById("applyThemeBtn"),
+            statsText: document.getElementById("statsText")
+        };
+
+        const storageKey = "trixcyVirtualGardenData";
+        const guideSeenKey = "trixcyVirtualGardenGuideSeen";
+        const localAdminPasscode = "cush-trixcy";
+        const adminSessionKey = "trixcyVirtualGardenAdminUnlocked";
+        const seedData = {
+            flowers: [
+                { id: crypto.randomUUID(), x: 600, y: 890, stage: 1, note: "You are my favorite hello.", memory: "Our sweetest conversations.", photo: "", message: "Every day with you is spring.", compliment: "You glow even brighter than sunrise." },
+                { id: crypto.randomUUID(), x: 760, y: 990, stage: 0, note: "You are my safe place.", memory: "Laughing over little things.", photo: "", message: "You make life magical.", compliment: "Your smile is art." },
+                { id: crypto.randomUUID(), x: 980, y: 1040, stage: 1, note: "You are poetry in motion.", memory: "Our favorite songs at night.", photo: "", message: "Forever starts in moments like this.", compliment: "Your heart is beautiful." },
+                { id: crypto.randomUUID(), x: 1180, y: 960, stage: 2, note: "My love grows with every heartbeat.", memory: "The day this garden was born.", photo: "", message: "Thank you for being you.", compliment: "You are stunning in every way." },
+                { id: crypto.randomUUID(), x: 1370, y: 1020, stage: 0, note: "You make ordinary days sparkle.", memory: "Tiny adventures we shared.", photo: "", message: "Our story keeps blooming.", compliment: "You are effortlessly lovely." }
+            ],
+            letters: [
+                { id: crypto.randomUUID(), title: "A Morning Promise", body: "Good morning, my love. I promise to choose you in every season, on every ordinary day, and in every dream we build together." },
+                { id: crypto.randomUUID(), title: "When I Miss You", body: "When I miss you, I walk through this garden and every flower reminds me that your love is always near." }
+            ],
+            memories: [
+                { id: crypto.randomUUID(), title: "First Spark", date: "2026-05-17", body: "The day our courtship officially began." },
+                { id: crypto.randomUUID(), title: "Sweet Conversations", date: "2026-05-24", body: "A simple day full of laughter and genuine connection." },
+                { id: crypto.randomUUID(), title: "Garden Promise", date: "2026-06-07", body: "A virtual garden made during the suitor season, full of sincere intention." }
+            ],
+            photos: [],
+            songs: [],
+            achievements: [],
+            unlockedAreas: []
+        };
+
+        const state = {
+            data: loadData(),
+            selectedFlowerId: null,
+            authenticated: sessionStorage.getItem(adminSessionKey) === "1",
+            player: { x: 1080, y: 760, speed: 8 },
+            keys: new Set(),
+            playing: false,
+            songIndex: 0,
+            shuffle: false,
+            repeat: false,
+            visualizer: null,
+            analyser: null,
+            audioContext: null,
+            animationFrameId: null,
+            noteTimer: null,
+            visitedZones: new Set(),
+            slideshowTimer: null
+        };
+
+        const hiddenAreas = [
+            { key: "rose", name: "Rose Tunnel", x1: 40, y1: 880, x2: 360, y2: 1130 },
+            { key: "cave", name: "Secret Heart Cave", x1: 1710, y1: 840, x2: 2070, y2: 1110 },
+            { key: "sakura", name: "Hidden Sakura Garden", x1: 1640, y1: 180, x2: 2020, y2: 440 },
+            { key: "lake", name: "Dream Lake", x1: 220, y1: 180, x2: 620, y2: 460 }
+        ];
+
+        const butterflyMessages = [
+            "Butterfly note: You are my sweetest miracle.",
+            "Funny memory: We laughed until we cried.",
+            "Cute nickname unlocked: My Little Blossom.",
+            "Love confession: I fall for you every day.",
+            "Secret truth: You make my heart feel at home."
+        ];
+
+        const surprisePool = [
+            { note: "Random love note: You are my forever favorite.", image: "", message: "Secret message: My heart chose you.", compliment: "Compliment: Your kindness is beautiful.", quote: "Cute quote: Love blooms where you are." },
+            { note: "Random love note: You are my best chapter.", image: "", message: "Secret message: You are my peace.", compliment: "Compliment: Your laugh is sunshine.", quote: "Cute quote: You are my once in a lifetime." },
+            { note: "Random love note: I cherish every moment with you.", image: "", message: "Secret message: You make life glow.", compliment: "Compliment: Your soul is radiant.", quote: "Cute quote: Loving you feels like home." }
+        ];
+
+        const fountainWishes = [
+            "Future dream: Build a cozy little home together.",
+            "Couple goal: Travel hand in hand through new cities.",
+            "Promise: Keep choosing each other with softness.",
+            "Bucket list: Watch the stars by the sea at midnight."
+        ];
+
+        const achievements = [
+            { key: "firstFlower", label: "First Flower Clicked" },
+            { key: "butterfly", label: "Found Hidden Butterfly" },
+            { key: "tenNotes", label: "Opened 10 Notes" },
+            { key: "allAreas", label: "Visited Every Garden Area" },
+            { key: "allSongs", label: "Listened to Every Song" }
+        ];
+
+        let openedNotesCount = 0;
+        const listenedSongs = new Set();
+
+        wireLanding();
+        renderAll();
+        initVisualEnvironment();
+        initMusic();
+        initAdmin();
+        initMovement();
+        setupModals();
+        setupPwa();
+
+        function loadData() {
+            try {
+                const fromStorage = localStorage.getItem(storageKey);
+                if (!fromStorage) return structuredClone(seedData);
+                const parsed = JSON.parse(fromStorage);
+                return {
+                    ...structuredClone(seedData),
+                    ...parsed,
+                    flowers: parsed.flowers?.length ? parsed.flowers : structuredClone(seedData.flowers),
+                    letters: parsed.letters?.length ? parsed.letters : structuredClone(seedData.letters),
+                    memories: parsed.memories?.length ? parsed.memories : structuredClone(seedData.memories),
+                    photos: parsed.photos || [],
+                    songs: parsed.songs || [],
+                    achievements: parsed.achievements || [],
+                    unlockedAreas: parsed.unlockedAreas || []
+                };
+            } catch {
+                return structuredClone(seedData);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(storageKey, JSON.stringify(state.data));
+            refreshStats();
+        }
+
+        function wireLanding() {
+            ui.noBtn.addEventListener("click", () => {
+                ui.noMessage.classList.remove("hidden");
+            });
+
+            ui.yesBtn.addEventListener("click", () => {
+                ui.landing.classList.add("hidden");
+                ui.app.classList.remove("hidden");
+                requestAnimationFrame(() => ui.app.classList.add("active"));
+                ui.flowerPanel.classList.remove("hidden");
+                unlockAchievement("firstFlower", false);
+                startCounter();
+                if (localStorage.getItem(guideSeenKey) !== "1") {
+                    openModal(ui.guideModal);
+                    localStorage.setItem(guideSeenKey, "1");
+                }
+            });
+
+            ui.messageBtn.addEventListener("click", () => openModal(ui.messageModal));
+            ui.galleryBtn.addEventListener("click", () => openModal(ui.lightbox));
+            ui.achievementsBtn.addEventListener("click", () => {
+                renderAchievements();
+                openModal(ui.achievementModal);
+            });
+            ui.guideBtn.addEventListener("click", () => openModal(ui.guideModal));
+            ui.toggleMusic.addEventListener("click", () => {
+                ui.musicPanel.classList.toggle("hidden");
+            });
+        }
+
+        function renderAll() {
+            renderFlowers();
+            renderButterflies();
+            renderMemories();
+            renderLetters();
+            renderGallery();
+            renderPlaylist();
+            renderAchievements();
+            refreshStats();
+        }
+
+        function renderFlowers() {
+            ui.flowers.innerHTML = "";
+            state.data.flowers.forEach((flower) => {
+                const button = document.createElement("button");
+                button.className = "flora";
+                button.style.left = `${flower.x}px`;
+                button.style.top = `${flower.y}px`;
+                button.dataset.id = flower.id;
+                button.dataset.stage = String(flower.stage);
+                button.innerHTML = `<span class="stem"></span><span class="blossom"></span>`;
+                button.addEventListener("click", () => selectFlower(flower.id));
+                ui.flowers.appendChild(button);
+            });
+        }
+
+        function selectFlower(id) {
+            const flower = state.data.flowers.find((f) => f.id === id);
+            if (!flower) return;
+            state.selectedFlowerId = id;
+            ui.selectedFlowerLabel.textContent = `Selected Flower • Stage ${flower.stage + 1} / 3`;
+            const nodes = ui.flowers.querySelectorAll(".flora");
+            nodes.forEach((n) => n.style.filter = n.dataset.id === id ? "drop-shadow(0 0 12px rgba(255,93,149,.9))" : "none");
+            unlockAchievement("firstFlower", true);
+            if (flower.stage >= 2) {
+                revealFlower(flower);
+            }
+        }
+
+        function revealFlower(flower) {
+            openedNotesCount += 1;
+            if (openedNotesCount >= 10) unlockAchievement("tenNotes", true);
+            const message = [
+                "Bloom revealed 🌺",
+                `Love Note: ${flower.note}`,
+                `Memory: ${flower.memory}`,
+                `Special Message: ${flower.message}`,
+                `Secret Compliment: ${flower.compliment}`
+            ].join("\n\n");
+            showToast(message);
+        }
+
+        ui.waterFlowerBtn.addEventListener("click", () => {
+            const flower = state.data.flowers.find((f) => f.id === state.selectedFlowerId);
+            if (!flower) {
+                showToast("Select a flower first.");
+                return;
+            }
+            if (flower.stage < 2) {
+                flower.stage += 1;
+                const node = ui.flowers.querySelector(`[data-id="${flower.id}"]`);
+                if (node) {
+                    node.dataset.stage = String(flower.stage);
+                    node.classList.add("bloom");
+                    setTimeout(() => node.classList.remove("bloom"), 850);
+                }
+                if (flower.stage >= 2) revealFlower(flower);
+                saveData();
+            } else {
+                revealFlower(flower);
+            }
+        });
+
+        ui.plantFlowerBtn.addEventListener("click", () => {
+            const flower = {
+                id: crypto.randomUUID(),
+                x: rand(130, 2000),
+                y: rand(240, 1280),
+                stage: 0,
+                note: "Plant note: You are loved deeply.",
+                memory: "Fresh memory: A new chapter starts here.",
+                photo: "",
+                message: "Special message: This bloom is for you.",
+                compliment: "Secret compliment: You are precious."
+            };
+            state.data.flowers.push(flower);
+            renderFlowers();
+            saveData();
+            showToast("A new flower has been planted 🌱");
+        });
+
+        function renderButterflies() {
+            ui.butterflies.innerHTML = "";
+            for (let i = 0; i < 8; i += 1) {
+                const b = document.createElement("button");
+                b.className = "butterfly";
+                b.style.left = `${rand(120, 2050)}px`;
+                b.style.top = `${rand(100, 1320)}px`;
+                b.style.animationDuration = `${rand(4, 8)}s`;
+                b.addEventListener("click", () => {
+                    unlockAchievement("butterfly", true);
+                    showToast(butterflyMessages[rand(0, butterflyMessages.length - 1)] + " 🦋");
+                });
+                ui.butterflies.appendChild(b);
+            }
+        }
+
+        ui.dailyFlower.addEventListener("click", () => {
+            const now = new Date();
+            const dayIndex = (now.getFullYear() * 366 + now.getMonth() * 31 + now.getDate()) % surprisePool.length;
+            const surprise = surprisePool[dayIndex];
+            showToast(["Daily Surprise Flower 🌷", surprise.note, surprise.quote, surprise.message, surprise.compliment].join("\n\n"));
+        });
+
+        ui.fountain.addEventListener("click", (event) => {
+            const rect = ui.fountain.getBoundingClientRect();
+            const ripple = document.createElement("span");
+            ripple.className = "ripple";
+            ripple.style.left = `${event.clientX - rect.left}px`;
+            ripple.style.top = `${event.clientY - rect.top}px`;
+            ui.fountain.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 1300);
+            showToast("Coin tossed! " + fountainWishes[rand(0, fountainWishes.length - 1)]);
+        });
+
+        ui.memoryTree.addEventListener("click", () => openModal(ui.memoryModal));
+        ui.loveHouse.addEventListener("click", () => openModal(ui.letterModal));
+
+        function renderMemories() {
+            const sorted = [...state.data.memories].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+            ui.memoryTimeline.innerHTML = sorted.map((m) => `
+				<article class="glass" style="padding:0.7rem; margin-top:0.5rem;">
+					<h4>${escapeHtml(m.title)}</h4>
+					<p class="tiny">${escapeHtml(m.date || "No date")}</p>
+					<p>${escapeHtml(m.body)}</p>
+				</article>
+			`).join("");
+        }
+
+        function renderLetters() {
+            ui.letterSelect.innerHTML = state.data.letters
+                .map((l) => `<option value="${l.id}">${escapeHtml(l.title)}</option>`)
+                .join("");
+            if (!state.data.letters.length) {
+                ui.letterSelect.innerHTML = "<option>No letters yet</option>";
+            }
+        }
+
+        ui.openEnvelope.addEventListener("click", () => {
+            const current = state.data.letters.find((l) => l.id === ui.letterSelect.value) || state.data.letters[0];
+            if (!current) {
+                showToast("No letters available yet.");
+                return;
+            }
+            typewrite(ui.letterOutput, current.body);
+        });
+
+        function renderGallery() {
+            ui.galleryGrid.innerHTML = state.data.photos.map((photo, i) => `
+				<figure class="gallery-item" data-index="${i}" title="${escapeHtml(photo.caption || "Memory")}">
+					<img src="${photo.url}" alt="${escapeHtml(photo.caption || "Memory photo")}">
+				</figure>
+			`).join("");
+
+            ui.galleryGrid.querySelectorAll(".gallery-item").forEach((item) => {
+                item.addEventListener("click", () => {
+                    const idx = Number(item.dataset.index);
+                    showPhoto(idx);
+                });
+            });
+        }
+
+        function showPhoto(index) {
+            const photo = state.data.photos[index];
+            if (!photo) return;
+            ui.lightboxView.classList.remove("hidden");
+            ui.lightboxImage.src = photo.url;
+            ui.lightboxCaption.textContent = photo.caption || "A sweet memory";
+            makePetalBurst();
+        }
+
+        ui.startSlideshow.addEventListener("click", () => {
+            if (!state.data.photos.length) {
+                showToast("Upload photos first to start slideshow.");
+                return;
+            }
+            clearInterval(state.slideshowTimer);
+            let i = 0;
+            showPhoto(i);
+            state.slideshowTimer = setInterval(() => {
+                i = (i + 1) % state.data.photos.length;
+                showPhoto(i);
+            }, 2500);
+            showToast("Slideshow started with floating petals 🌸");
+        });
+
+        ui.photoUploader.addEventListener("change", (event) => {
+            const files = [...(event.target.files || [])];
+            const caption = ui.photoCaption.value.trim();
+            if (!files.length) return;
+            for (const file of files) {
+                const url = URL.createObjectURL(file);
+                state.data.photos.push({ url, caption: caption || file.name });
+            }
+            renderGallery();
+            saveData();
+            event.target.value = "";
+        });
+
+        function initMusic() {
+            ui.audioPlayer.volume = Number(ui.volumeSlider.value);
+
+            ui.songUploader.addEventListener("change", (event) => {
+                const files = [...(event.target.files || [])];
+                files.forEach((file) => {
+                    const url = URL.createObjectURL(file);
+                    state.data.songs.push({ id: crypto.randomUUID(), name: file.name, url });
+                });
+                saveData();
+                renderPlaylist();
+                if (state.data.songs.length === files.length) {
+                    state.songIndex = 0;
+                    playSong(0, true);
+                }
+                event.target.value = "";
+            });
+
+            ui.playPauseSong.addEventListener("click", () => {
+                if (!state.data.songs.length) {
+                    showToast("Upload songs to start your playlist.");
+                    return;
+                }
+                if (state.playing) {
+                    ui.audioPlayer.pause();
+                } else {
+                    playSong(state.songIndex, true);
+                }
+            });
+
+            ui.prevSong.addEventListener("click", () => jumpSong(-1));
+            ui.nextSong.addEventListener("click", () => jumpSong(1));
+            ui.shuffleBtn.addEventListener("click", () => {
+                state.shuffle = !state.shuffle;
+                ui.shuffleBtn.textContent = `Shuffle: ${state.shuffle ? "On" : "Off"}`;
+            });
+            ui.repeatBtn.addEventListener("click", () => {
+                state.repeat = !state.repeat;
+                ui.repeatBtn.textContent = `Repeat: ${state.repeat ? "On" : "Off"}`;
+            });
+            ui.volumeSlider.addEventListener("input", () => {
+                ui.audioPlayer.volume = Number(ui.volumeSlider.value);
+            });
+
+            ui.audioPlayer.addEventListener("play", () => {
+                state.playing = true;
+                ui.playPauseSong.textContent = "Pause";
+                startVisualizer();
+                startFloatingNotes();
+            });
+
+            ui.audioPlayer.addEventListener("pause", () => {
+                state.playing = false;
+                ui.playPauseSong.textContent = "Play";
+                stopFloatingNotes();
+            });
+
+            ui.audioPlayer.addEventListener("ended", () => {
+                if (state.repeat) {
+                    playSong(state.songIndex, true);
+                    return;
+                }
+                jumpSong(1);
+            });
+        }
+
+        function renderPlaylist() {
+            ui.playlist.innerHTML = "";
+            state.data.songs.forEach((song, idx) => {
+                const item = document.createElement("div");
+                item.className = "song";
+                item.innerHTML = `
+					<button class="chip" data-action="play">${escapeHtml(song.name)}</button>
+					<button class="chip" data-action="remove">✕</button>
+				`;
+                item.querySelector('[data-action="play"]').addEventListener("click", () => playSong(idx, true));
+                item.querySelector('[data-action="remove"]').addEventListener("click", () => {
+                    state.data.songs.splice(idx, 1);
+                    if (state.songIndex >= state.data.songs.length) state.songIndex = 0;
+                    renderPlaylist();
+                    saveData();
+                });
+                ui.playlist.appendChild(item);
+            });
+            if (!state.data.songs.length) {
+                ui.playlist.innerHTML = "<p class='tiny'>No songs uploaded yet.</p>";
+            }
+        }
+
+        function playSong(index, autoplay) {
+            const song = state.data.songs[index];
+            if (!song) return;
+            state.songIndex = index;
+            ui.audioPlayer.src = song.url;
+            ui.nowPlaying.textContent = song.name;
+            listenedSongs.add(song.name);
+            if (listenedSongs.size >= state.data.songs.length && state.data.songs.length > 0) {
+                unlockAchievement("allSongs", true);
+            }
+            if (autoplay) {
+                ui.audioPlayer.play().catch(() => {
+                    showToast("Tap Play to start audio (autoplay blocked by browser).");
+                });
+            }
+        }
+
+        function jumpSong(direction) {
+            if (!state.data.songs.length) return;
+            let next = state.songIndex + direction;
+            if (state.shuffle) next = rand(0, state.data.songs.length - 1);
+            if (next < 0) next = state.data.songs.length - 1;
+            if (next >= state.data.songs.length) next = 0;
+            playSong(next, true);
+        }
+
+        function startVisualizer() {
+            if (!state.audioContext) {
+                state.audioContext = new AudioContext();
+                const source = state.audioContext.createMediaElementSource(ui.audioPlayer);
+                state.analyser = state.audioContext.createAnalyser();
+                state.analyser.fftSize = 64;
+                source.connect(state.analyser);
+                state.analyser.connect(state.audioContext.destination);
+            }
+
+            const ctx = ui.visualizer.getContext("2d");
+            if (!ctx || !state.analyser) return;
+            const bufferLen = state.analyser.frequencyBinCount;
+            const data = new Uint8Array(bufferLen);
+
+            const draw = () => {
+                state.animationFrameId = requestAnimationFrame(draw);
+                state.analyser.getByteFrequencyData(data);
+                ctx.clearRect(0, 0, ui.visualizer.width, ui.visualizer.height);
+                data.forEach((val, i) => {
+                    const w = 4;
+                    const gap = 1.8;
+                    const x = i * (w + gap);
+                    const h = (val / 255) * 54;
+                    ctx.fillStyle = i % 2 === 0 ? "#ff5f9a" : "#ff9fc3";
+                    ctx.fillRect(x, ui.visualizer.height - h, w, h);
+                });
+            };
+            if (!state.animationFrameId) draw();
+        }
+
+        function startFloatingNotes() {
+            if (state.noteTimer) return;
+            state.noteTimer = setInterval(() => {
+                const n = document.createElement("span");
+                n.className = "music-note";
+                n.textContent = ["♪", "♫", "♬"][rand(0, 2)];
+                n.style.left = `${rand(30, window.innerWidth - 40)}px`;
+                n.style.bottom = `${rand(20, 120)}px`;
+                ui.floatingNotes.appendChild(n);
+                setTimeout(() => n.remove(), 2900);
+            }, 400);
+        }
+
+        function stopFloatingNotes() {
+            clearInterval(state.noteTimer);
+            state.noteTimer = null;
+        }
+
+        function initMovement() {
+            document.addEventListener("keydown", (e) => {
+                const key = e.key.toLowerCase();
+                if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(key)) {
+                    state.keys.add(key);
+                }
+            });
+
+            document.addEventListener("keyup", (e) => state.keys.delete(e.key.toLowerCase()));
+
+            document.querySelectorAll("#movePad button[data-dir]").forEach((btn) => {
+                btn.addEventListener("pointerdown", () => state.keys.add(btn.dataset.dir));
+                btn.addEventListener("pointerup", () => state.keys.delete(btn.dataset.dir));
+                btn.addEventListener("pointerleave", () => state.keys.delete(btn.dataset.dir));
+            });
+
+            const step = () => {
+                let moved = false;
+                if (hasKey("arrowup") || hasKey("w") || hasKey("up")) { state.player.y -= state.player.speed; moved = true; }
+                if (hasKey("arrowdown") || hasKey("s") || hasKey("down")) { state.player.y += state.player.speed; moved = true; }
+                if (hasKey("arrowleft") || hasKey("a") || hasKey("left")) { state.player.x -= state.player.speed; moved = true; }
+                if (hasKey("arrowright") || hasKey("d") || hasKey("right")) { state.player.x += state.player.speed; moved = true; }
+
+                state.player.x = clamp(state.player.x, 0, 2156);
+                state.player.y = clamp(state.player.y, 0, 1442);
+                ui.avatar.style.left = `${state.player.x}px`;
+                ui.avatar.style.top = `${state.player.y}px`;
+
+                if (moved) {
+                    centerCamera();
+                    checkAreaUnlocks();
+                }
+
+                requestAnimationFrame(step);
+            };
+            step();
+            centerCamera();
+        }
+
+        function centerCamera() {
+            const viewRect = ui.gardenView.getBoundingClientRect();
+            const x = viewRect.width / 2 - state.player.x - 22;
+            const y = viewRect.height / 2 - state.player.y - 30;
+            const minX = viewRect.width - 2200;
+            const minY = viewRect.height - 1500;
+            const tx = clamp(x, minX, 0);
+            const ty = clamp(y, minY, 0);
+            ui.gardenWorld.style.transform = `translate(${tx}px, ${ty}px)`;
+        }
+
+        function checkAreaUnlocks() {
+            hiddenAreas.forEach((area) => {
+                const inside = state.player.x >= area.x1 && state.player.x <= area.x2 && state.player.y >= area.y1 && state.player.y <= area.y2;
+                if (inside && !state.visitedZones.has(area.key)) {
+                    state.visitedZones.add(area.key);
+                    if (!state.data.unlockedAreas.includes(area.key)) state.data.unlockedAreas.push(area.key);
+                    showToast(`Hidden area discovered: ${area.name} 🔐`);
+                    saveData();
+                    if (state.visitedZones.size === hiddenAreas.length) unlockAchievement("allAreas", true);
+                }
+            });
+        }
+
+        function initAdmin() {
+            ui.toggleAdmin.addEventListener("click", () => {
+                ui.adminPanel.classList.toggle("hidden");
+            });
+
+            setAdminLockState(state.authenticated);
+
+            ui.adminLogin.addEventListener("click", () => {
+                const pass = ui.adminPassword.value.trim();
+                if (!pass) {
+                    showToast("Enter admin passcode.");
+                    return;
+                }
+                if (pass === localAdminPasscode) {
+                    setAdminLockState(true);
+                    ui.adminPassword.value = "";
+                    showToast("Admin unlocked.");
+                } else {
+                    showToast("Incorrect passcode.");
+                }
+            });
+
+            ui.adminLogout.addEventListener("click", () => {
+                setAdminLockState(false);
+                showToast("Admin locked.");
+            });
+
+            ui.addFlowerContent.addEventListener("click", () => {
+                const text = ui.adminNote.value.trim();
+                if (!text) {
+                    showToast("Write content first.");
+                    return;
+                }
+                const parts = text.split("|").map((p) => p.trim());
+                const flower = {
+                    id: crypto.randomUUID(),
+                    x: rand(120, 2020),
+                    y: rand(220, 1300),
+                    stage: 0,
+                    note: parts[0] || text,
+                    memory: parts[1] || "A tender memory.",
+                    photo: "",
+                    message: parts[2] || "A special message from Cush.",
+                    compliment: parts[3] || "A secret compliment for Trixcy."
+                };
+                state.data.flowers.push(flower);
+                renderFlowers();
+                saveData();
+                ui.adminNote.value = "";
+                showToast("New flower content added.");
+            });
+
+            ui.addLetterBtn.addEventListener("click", () => {
+                const title = ui.letterTitle.value.trim();
+                const body = ui.letterBody.value.trim();
+                if (!title || !body) {
+                    showToast("Add letter title and body.");
+                    return;
+                }
+                const entry = { id: crypto.randomUUID(), title, body };
+                state.data.letters.push(entry);
+                renderLetters();
+                saveData();
+                ui.letterTitle.value = "";
+                ui.letterBody.value = "";
+                showToast("Love letter added.");
+            });
+
+            ui.addMemoryBtn.addEventListener("click", () => {
+                const title = ui.memoryTitle.value.trim();
+                const date = ui.memoryDate.value;
+                const body = ui.memoryBody.value.trim();
+                if (!title || !date || !body) {
+                    showToast("Fill memory title, date, and details.");
+                    return;
+                }
+                const memory = { id: crypto.randomUUID(), title, date, body };
+                state.data.memories.push(memory);
+                renderMemories();
+                saveData();
+                ui.memoryTitle.value = "";
+                ui.memoryBody.value = "";
+                showToast("Memory branch added.");
+            });
+
+            ui.applyThemeBtn.addEventListener("click", () => {
+                const theme = ui.themeSelect.value;
+                if (theme === "rose-gold") {
+                    document.documentElement.style.setProperty("--rose-500", "#cf6f7e");
+                    document.documentElement.style.setProperty("--rose-700", "#a8485f");
+                }
+                if (theme === "cherry") {
+                    document.documentElement.style.setProperty("--rose-500", "#d92e59");
+                    document.documentElement.style.setProperty("--rose-700", "#971333");
+                }
+                if (theme === "romance") {
+                    document.documentElement.style.setProperty("--rose-500", "#b4123d");
+                    document.documentElement.style.setProperty("--rose-700", "#8a1232");
+                }
+                showToast("Theme updated.");
+            });
+        }
+
+        function setAdminLockState(unlocked) {
+            state.authenticated = unlocked;
+            ui.adminControls.classList.toggle("hidden", !unlocked);
+            ui.adminStatus.textContent = unlocked ? "Unlocked (local admin mode)" : "Locked";
+            sessionStorage.setItem(adminSessionKey, unlocked ? "1" : "0");
+        }
+
+        function setupModals() {
+            document.querySelectorAll("[data-close]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const target = document.getElementById(btn.dataset.close);
+                    if (target) closeModal(target);
+                });
+            });
+
+            [ui.messageModal, ui.memoryModal, ui.letterModal, ui.lightbox, ui.achievementModal, ui.guideModal].forEach((modal) => {
+                modal.addEventListener("click", (event) => {
+                    if (event.target === modal) closeModal(modal);
+                });
+            });
+        }
+
+        function openModal(modal) {
+            modal.style.display = "grid";
+            if (modal === ui.letterModal) {
+                const first = state.data.letters[0];
+                if (first) typewrite(ui.letterOutput, first.body);
+            }
+            if (modal === ui.memoryModal) renderMemories();
+            if (modal === ui.lightbox) renderGallery();
+        }
+
+        function closeModal(modal) {
+            modal.style.display = "none";
+            if (modal === ui.lightbox) {
+                clearInterval(state.slideshowTimer);
+            }
+        }
+
+        function startCounter() {
+            const startDate = new Date("2026-05-17T00:00:00");
+            const tick = () => {
+                const now = Date.now();
+                const diff = now - startDate.getTime();
+                const days = Math.floor(diff / 86400000);
+                const hours = Math.floor((diff % 86400000) / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                ui.counterChip.textContent = `Since Courtship: ${days}d ${hours}h ${mins}m ${secs}s`;
+            };
+            tick();
+            setInterval(tick, 1000);
+        }
+
+        ui.toggleDayNight.addEventListener("click", () => {
+            document.body.classList.toggle("night");
+            const isNight = document.body.classList.contains("night");
+            ui.toggleDayNight.textContent = isNight ? "Switch to Day ☀" : "Switch to Night ✨";
+            if (isNight && state.data.songs.length) {
+                playSong(state.songIndex, true);
+            }
+        });
+
+        function unlockAchievement(key, save = true) {
+            if (state.data.achievements.includes(key)) return;
+            state.data.achievements.push(key);
+            if (save) saveData();
+            renderAchievements();
+            showToast(`Achievement unlocked: ${achievements.find((a) => a.key === key)?.label || key}`);
+        }
+
+        function renderAchievements() {
+            ui.achievementList.innerHTML = achievements.map((a) => {
+                const unlocked = state.data.achievements.includes(a.key);
+                return `<article class="glass" style="padding:0.65rem; margin-top:0.45rem; opacity:${unlocked ? 1 : 0.55};">
+					<strong>${a.label}</strong>
+					<p class="tiny">${unlocked ? "Unlocked" : "Locked"}</p>
+				</article>`;
+            }).join("");
+        }
+
+        function refreshStats() {
+            ui.statsText.textContent = `${state.data.flowers.length} flowers • ${state.data.memories.length} memories • ${state.data.letters.length} letters • ${state.data.photos.length} photos • ${state.data.songs.length} songs`;
+        }
+
+        function initVisualEnvironment() {
+            const petalField = document.getElementById("petalField");
+            const heartField = document.getElementById("heartField");
+            const stars = document.getElementById("stars");
+            const fireflies = document.getElementById("fireflies");
+
+            for (let i = 0; i < 24; i += 1) {
+                const petal = document.createElement("span");
+                petal.className = "falling";
+                petal.textContent = ["❀", "✿", "❁"][rand(0, 2)];
+                petal.style.left = `${rand(0, 100)}vw`;
+                petal.style.fontSize = `${rand(12, 22)}px`;
+                petal.style.animationDuration = `${rand(10, 20)}s`;
+                petal.style.animationDelay = `${-rand(0, 20)}s`;
+                petal.style.color = ["#ff90b9", "#ff6ea0", "#ffd2e4"][rand(0, 2)];
+                petalField.appendChild(petal);
+            }
+
+            for (let i = 0; i < 18; i += 1) {
+                const heart = document.createElement("span");
+                heart.className = "falling";
+                heart.textContent = "❤";
+                heart.style.left = `${rand(0, 100)}vw`;
+                heart.style.fontSize = `${rand(10, 20)}px`;
+                heart.style.animationDuration = `${rand(12, 23)}s`;
+                heart.style.animationDelay = `${-rand(0, 22)}s`;
+                heart.style.color = ["#ff86af", "#ff6b9f", "#ffc8dd"][rand(0, 2)];
+                heartField.appendChild(heart);
+            }
+
+            for (let i = 0; i < 70; i += 1) {
+                const star = document.createElement("span");
+                star.className = "star";
+                star.style.width = `${rand(1, 3)}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${rand(0, 100)}%`;
+                star.style.top = `${rand(0, 100)}%`;
+                star.style.animationDelay = `${rand(0, 2000)}ms`;
+                stars.appendChild(star);
+            }
+
+            for (let i = 0; i < 32; i += 1) {
+                const ff = document.createElement("span");
+                ff.className = "firefly";
+                ff.style.width = `${rand(2, 5)}px`;
+                ff.style.height = ff.style.width;
+                ff.style.left = `${rand(0, 100)}%`;
+                ff.style.top = `${rand(0, 100)}%`;
+                ff.style.animationDelay = `${rand(0, 3000)}ms`;
+                fireflies.appendChild(ff);
+            }
+        }
+
+        function makePetalBurst() {
+            for (let i = 0; i < 12; i += 1) {
+                const p = document.createElement("span");
+                p.className = "falling";
+                p.textContent = "✿";
+                p.style.left = `${rand(10, 90)}vw`;
+                p.style.top = "20vh";
+                p.style.fontSize = `${rand(14, 24)}px`;
+                p.style.animationDuration = `${rand(3, 7)}s`;
+                p.style.color = ["#ff78a8", "#ff95bb", "#ffd4e6"][rand(0, 2)];
+                ui.globalEffects.appendChild(p);
+                setTimeout(() => p.remove(), 7500);
+            }
+        }
+
+        function showToast(message) {
+            const modal = document.createElement("section");
+            modal.style.position = "fixed";
+            modal.style.inset = "0";
+            modal.style.display = "grid";
+            modal.style.placeItems = "center";
+            modal.style.background = "rgba(40, 8, 23, 0.35)";
+            modal.style.zIndex = "140";
+            modal.innerHTML = `
+				<article class="modal-card" style="width:min(90vw,560px);">
+					<p style="white-space:pre-wrap; line-height:1.6;">${escapeHtml(message)}</p>
+					<div class="row" style="margin-top:0.8rem;">
+						<button class="btn">Close</button>
+					</div>
+				</article>
+			`;
+            const close = () => modal.remove();
+            modal.querySelector("button").addEventListener("click", close);
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) close();
+            });
+            document.body.appendChild(modal);
+        }
+
+        function typewrite(target, text) {
+            target.textContent = "";
+            let i = 0;
+            const timer = setInterval(() => {
+                target.textContent += text[i] || "";
+                i += 1;
+                if (i >= text.length) clearInterval(timer);
+            }, 16);
+        }
+
+        function hasKey(key) {
+            return state.keys.has(key);
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function setupPwa() {
+            if ("serviceWorker" in navigator && (location.protocol.startsWith("http") || location.hostname === "localhost")) {
+                navigator.serviceWorker.register("./sw.js").catch(() => {
+                    // Ignore sw registration failures in static file mode.
+                });
+            }
+        }
+
+    </script>
+</body>
+
+</html>
